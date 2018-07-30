@@ -98,6 +98,26 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithFrame:(CGRect)frame)
   return self.backedTextInputView.attributedText;
 }
 
+- (BOOL)textOf:(NSAttributedString*)newText equals:(NSAttributedString*)oldText{
+  // When the dictation is running we can't update the attibuted text on the backed up text view
+  // because setting the attributed string will kill the dictation. This means that we can't impose
+  // the settings on a dictation.
+  // Similarly, when the user is in the middle of inputting some text in Japanese/Chinese, there will be styling on the
+  // text that we should disregard. See https://developer.apple.com/documentation/uikit/uitextinput/1614489-markedtextrange?language=objc
+  // for more info.
+  // Lastly, when entering a password, etc., there will be additional styling on the field as the native text view
+  // handles showing the last character for a split second.
+  BOOL shouldFallbackToBareTextComparison =
+    [self.backedTextInputView.textInputMode.primaryLanguage isEqualToString:@"dictation"] ||
+    self.backedTextInputView.markedTextRange ||
+    self.backedTextInputView.isSecureTextEntry;
+  if (shouldFallbackToBareTextComparison) {
+    return ([newText.string isEqualToString:oldText.string]);
+  } else {
+    return ([newText isEqualToAttributedString:oldText]);
+  }
+}
+
 - (void)setAttributedText:(NSAttributedString *)attributedText
 {
   NSInteger eventLag = _nativeEventCount - _mostRecentEventCount;

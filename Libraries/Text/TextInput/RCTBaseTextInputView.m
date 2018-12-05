@@ -122,6 +122,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithFrame:(CGRect)frame)
 {
   NSInteger eventLag = _nativeEventCount - _mostRecentEventCount;
 
+  BOOL textNeedsUpdate = NO;
   // Remove tag attribute to ensure correct attributed string comparison.
   NSMutableAttributedString *const backedTextInputViewTextCopy = [self.backedTextInputView.attributedText mutableCopy];
   NSMutableAttributedString *const attributedTextCopy = [attributedText mutableCopy];
@@ -132,7 +133,9 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithFrame:(CGRect)frame)
   [attributedTextCopy removeAttribute:RCTTextAttributesTagAttributeName
                                 range:NSMakeRange(0, attributedTextCopy.length)];
 
-  if (eventLag == 0 && ![attributedTextCopy isEqualToAttributedString:backedTextInputViewTextCopy]) {
+  textNeedsUpdate = ([self textOf:attributedTextCopy equals:backedTextInputViewTextCopy] == NO);
+
+  if (eventLag == 0 && textNeedsUpdate) {
     UITextRange *selection = self.backedTextInputView.selectedTextRange;
     NSInteger oldTextLength = self.backedTextInputView.attributedText.string.length;
 
